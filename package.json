@@ -1,0 +1,10 @@
+{
+  "name": "dofus-harebourg-training",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Entraînement aux confusions horaires et au delock du Comte Harebourg (Dofus 3).",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "test": "node --test tests/engine.test.js"
+  }
+}

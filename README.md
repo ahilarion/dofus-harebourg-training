@@ -65,3 +65,9 @@ Les tests (`tests/engine.test.js`) reproduisent les schémas de ces guides : 90�
 ## Crédits
 
 Les visuels de `assets/` (Comte Harebourg, Cycloïde, Granduk, Sinistrofu, Strigide, icônes de sorts, têtes de classes) sont © Ankama Games et ont été récupérés via l'API DofusDB. Ce projet de fan n'est pas officiel et n'est pas affilié à Ankama.
+
+## GitHub Pages
+
+Le workflow `.github/workflows/pages.yml` lance les tests puis publie le site à chaque push.
+
+Activation (une seule fois) : **Settings → Pages → Build and deployment → Source : GitHub Actions**, puis relancer le workflow depuis l'onglet **Actions**. Le site est alors servi sur `https://ahilarion.github.io/dofus-harebourg-training/`.

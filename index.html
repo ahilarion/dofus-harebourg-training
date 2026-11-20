@@ -2,211 +2,253 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Harebourg Trainer</title>
   <meta name="description" content="Entraînement par cœur aux confusions horaires et au delock du Comte Harebourg (Dofus 3).">
   <link rel="icon" href="assets/sort-contretemps.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <script>
+    /* thème choisi avant le premier rendu (évite le flash) */
+    try {
+      var o = JSON.parse(localStorage.getItem('hbt-opts') || '{}');
+      if (o.theme === 'light' || o.theme === 'dark') document.documentElement.setAttribute('data-theme', o.theme);
+    } catch (e) { /* stockage indisponible */ }
+  </script>
 </head>
-<body>
-  <header class="top">
-    <div class="brand">
-      <img src="assets/comte-harebourg.png" alt="" class="brand-boss">
-      <div>
-        <h1>Harebourg Trainer</h1>
-        <p class="sub">Confusions horaires &amp; delock — Frigost 3</p>
+<body data-tab="confusion">
+  <h1 class="sr-only">Harebourg Trainer</h1>
+  <svg width="0" height="0" class="sr-only" aria-hidden="true">
+    <symbol id="i-heart" viewBox="0 0 100 90"><path d="M50 87C20 65 2 47 2 27 2 12 13 2 27 2c10 0 18 6 23 14C55 8 63 2 73 2c14 0 25 10 25 25 0 20-18 38-48 60Z"/></symbol>
+  </svg>
+
+  <div class="app">
+    <!-- ===== SCÈNE : le plateau ===== -->
+    <main class="stage">
+      <section id="tab-confusion" class="tab active" aria-label="Confusions">
+        <svg id="c-board" class="board" viewBox="-258 -46 516 384" preserveAspectRatio="xMidYMid meet" aria-label="Plateau de combat"></svg>
+        <div class="quiz-hero" aria-hidden="true" hidden>
+          <div class="heart heart-xl"><svg><use href="#i-heart"/></svg><span class="hero-hp">--</span></div>
+          <span class="chip melee hero-melee" hidden></span>
+        </div>
+      </section>
+      <section id="tab-delock" class="tab" aria-label="Delock">
+        <svg id="d-board" class="board" viewBox="-258 -46 516 384" preserveAspectRatio="xMidYMid meet" aria-label="Plateau de combat"></svg>
+      </section>
+      <div class="flash" aria-hidden="true"></div>
+    </main>
+
+    <!-- ===== RAIL (desktop) / BARRE + DOCK (pile) ===== -->
+    <aside class="rail">
+      <nav class="rail-top">
+        <div class="tabs" role="tablist" aria-label="Entraînement">
+          <button role="tab" data-tab="confusion" aria-selected="true" title="Confusions (T)"><span class="long">Confusions</span><span class="short" aria-hidden="true">Confus.</span></button>
+          <button role="tab" data-tab="delock" aria-selected="false" title="Delock (T)">Delock</button>
+        </div>
+        <select id="mode-select" aria-label="Exercice"></select>
+        <button class="mini-stats" id="btn-stats" aria-haspopup="dialog" aria-expanded="false" aria-label="Statistiques" title="Statistiques (S)">—</button>
+        <button class="icon-btn" id="btn-opts" aria-haspopup="dialog" aria-expanded="false" aria-label="Options" title="Options (O)">⚙</button>
+        <button class="icon-btn" id="btn-fiche" data-tab="fiche" aria-haspopup="dialog" aria-expanded="false" aria-label="Fiche des règles" title="Fiche (F)">?</button>
+      </nav>
+
+      <div class="rail-dock">
+        <!-- sélecteur d'exercice -->
+        <div class="seg seg-mode" data-opt="cMode" data-for="confusion" role="group" aria-label="Exercice">
+          <button data-v="taper" class="on" title="Taper">Taper</button>
+          <button data-v="marquer" title="Marquer">Marquer</button>
+          <button data-v="quiz" title="Lire la confusion" aria-label="Lire la confusion">Lire</button>
+          <button data-v="mixte" title="Mixte" aria-label="Mixte">Mix</button>
+        </div>
+        <div class="seg seg-mode" data-opt="dMode" data-for="delock" role="group" aria-label="Exercice">
+          <button data-v="predire" class="on" title="Prédire la frappe" aria-label="Prédire la frappe">Prédire</button>
+          <button data-v="placer" title="Se placer" aria-label="Se placer">Placer</button>
+          <button data-v="complet" title="Delock complet" aria-label="Delock complet">Complet</button>
+          <button data-v="mixte" title="Mixte" aria-label="Mixte">Mix</button>
+        </div>
+
+        <!-- HUD -->
+        <div class="hud" data-for="confusion">
+          <div id="c-heart" class="heart"><svg aria-hidden="true"><use href="#i-heart"/></svg><span id="c-hp" aria-hidden="true">--</span></div>
+          <span id="c-melee" class="chip melee" hidden></span>
+          <span id="c-hp-label" class="sr-only"></span>
+          <span id="c-timer" class="timer" hidden></span>
+        </div>
+        <div class="hud" data-for="delock">
+          <span id="d-turn" class="turn-badge" title="Tour">T<b>-</b></span>
+          <span id="d-parity" class="chip" hidden></span>
+          <span id="d-state" class="sr-only">Comte invulnérable</span>
+          <span id="d-hp-row" class="hud-hp" hidden>
+            <span class="heart"><svg aria-hidden="true"><use href="#i-heart"/></svg><span id="d-hp">--</span></span>
+            <span id="d-melee" class="chip melee" hidden></span>
+          </span>
+        </div>
+
+        <!-- message : consigne OU verdict -->
+        <div class="msg" data-for="confusion">
+          <p id="c-prompt" class="prompt"></p>
+          <div id="c-feedback" class="fb" aria-live="polite"></div>
+        </div>
+        <div class="msg" data-for="delock">
+          <p id="d-prompt" class="prompt"></p>
+          <div id="d-feedback" class="fb" aria-live="polite"></div>
+        </div>
+
+        <!-- réponses + pied -->
+        <div class="act">
+        <div class="answers" data-for="confusion">
+          <div id="c-quiz" class="quiz" hidden>
+            <button data-k="0" class="k0"><kbd>1</kbd> Aucune</button>
+            <button data-k="1" class="k1" title="90° horaire" aria-label="90° horaire"><kbd>2</kbd> ↻ 90°</button>
+            <button data-k="2" class="k2" title="180°"><kbd>3</kbd> 180°</button>
+            <button data-k="3" class="k3" title="90° anti-horaire" aria-label="90° anti-horaire"><kbd>4</kbd> ↺ 90°</button>
+          </div>
+          <button id="c-impossible" class="btn ghost" hidden title="Impossible : échec critique (I)" aria-label="Impossible : échec critique">⊘ Impossible</button>
+        </div>
+        <div class="answers" data-for="delock">
+          <div id="d-outcomes" class="outcomes" hidden>
+            <button data-o="comte-tp" title="Le Comte est téléporté (reste invulnérable)" aria-label="Le Comte est téléporté (reste invulnérable)"><kbd>1</kbd> Comte téléporté</button>
+            <button data-o="self-tp" title="Je suis téléporté de l'autre côté du Comte" aria-label="Je suis téléporté de l'autre côté du Comte"><kbd>2</kbd> Je suis téléporté</button>
+            <button data-o="delock" title="Delock : échange de place, Comte vulnérable" aria-label="Delock : échange de place, Comte vulnérable"><kbd>3</kbd> Delock (échange)</button>
+            <button data-o="delock-summon" title="Delock sur invocation : alliés à ≤ 3 cases tués" aria-label="Delock sur invocation : alliés à 3 cases ou moins tués"><kbd>4</kbd> Delock sur invoc</button>
+            <button data-o="wipe" title="Case d'arrivée bloquée : toute l'équipe meurt" aria-label="Case d'arrivée bloquée : toute l'équipe meurt"><kbd>5</kbd> Équipe morte</button>
+          </div>
+          <button id="d-offmap" class="btn ghost" hidden title="Hors de la carte (H)" aria-label="Hors de la carte">Hors carte</button>
+          <button id="d-impossible" class="btn ghost" hidden title="Impossible : échec critique (I)" aria-label="Impossible : échec critique">⊘ Impossible</button>
+        </div>
+
+        <!-- pied -->
+        <div class="rail-foot">
+          <button id="c-next" class="btn primary next" data-for="confusion">Suivant <kbd>Espace</kbd></button>
+          <button id="d-next" class="btn primary next" data-for="delock">Suivant <kbd>Espace</kbd></button>
+          <div class="autobar" hidden><i></i></div>
+        </div>
+        </div>
       </div>
+    </aside>
+  </div>
+
+  <!-- ===== POPOVERS ===== -->
+  <dialog id="pop-opts" class="pop" aria-labelledby="opts-title">
+    <h2 id="opts-title">Options</h2>
+    <div class="opt-row" data-for="confusion"><span>Cible</span>
+      <div class="seg" data-opt="cAlign"><button data-v="ligne">Ligne</button><button data-v="diagonale">Diagonale</button><button data-v="libre" class="on">Libre</button></div>
     </div>
-    <nav class="tabs" role="tablist">
-      <button role="tab" data-tab="confusion" aria-selected="true">Confusions</button>
-      <button role="tab" data-tab="delock" aria-selected="false">Delock</button>
-      <button role="tab" data-tab="fiche" aria-selected="false">Fiche</button>
-    </nav>
-  </header>
+    <div class="opt-row" data-for="confusion"><span>Mêlée</span>
+      <div class="seg" data-opt="cMelee"><button data-v="off">Non</button><button data-v="on" class="on">Oui</button></div>
+    </div>
+    <div class="opt-row" data-for="confusion"><span>Échecs critiques</span>
+      <div class="seg" data-opt="cImpossible"><button data-v="off">Non</button><button data-v="on" class="on">Oui</button></div>
+    </div>
+    <div class="opt-row"><span>Enchaîner si juste</span>
+      <div class="seg" data-opt="autoNext"><button data-v="off">Non</button><button data-v="on" class="on">Oui</button></div>
+    </div>
+    <div class="opt-row"><span>Chrono</span>
+      <div class="seg" data-opt="showTimer"><button data-v="off" class="on">Masqué</button><button data-v="on">Visible</button></div>
+    </div>
+    <div class="opt-row"><span>Thème</span>
+      <div class="seg" data-opt="theme"><button data-v="auto" class="on">Auto</button><button data-v="light">Clair</button><button data-v="dark">Sombre</button></div>
+    </div>
+  </dialog>
 
-  <main>
-    <!-- ============ CONFUSIONS ============ -->
-    <section id="tab-confusion" class="tab active">
-      <div class="toolbar">
-        <div class="seg" data-opt="cMode">
-          <span class="seg-label">Exercice</span>
-          <button data-v="taper" class="on">Taper</button>
-          <button data-v="marquer">Marquer</button>
-          <button data-v="quiz">Lire la confusion</button>
-          <button data-v="mixte">Mixte</button>
-        </div>
-        <div class="seg" data-opt="cAlign">
-          <span class="seg-label">Cible</span>
-          <button data-v="ligne">En ligne</button>
-          <button data-v="diagonale">Diagonale</button>
-          <button data-v="libre" class="on">Libre</button>
-        </div>
-        <div class="seg" data-opt="cMelee">
-          <span class="seg-label">Mêlée</span>
-          <button data-v="off">Non</button>
-          <button data-v="on" class="on">Oui</button>
-        </div>
-        <div class="seg" data-opt="cImpossible">
-          <span class="seg-label">Échecs critiques</span>
-          <button data-v="off">Non</button>
-          <button data-v="on" class="on">Oui</button>
-        </div>
-      </div>
+  <dialog id="pop-stats" class="pop" aria-labelledby="stats-title">
+    <h2 id="stats-title">Statistiques <small class="stats-mode"></small></h2>
+    <div id="c-stats" class="stats" data-for="confusion"></div>
+    <div id="d-stats" class="stats" data-for="delock"></div>
+    <div class="reset-row">
+      <button id="c-reset" data-for="confusion" class="link">Réinitialiser</button>
+      <button id="d-reset" data-for="delock" class="link">Réinitialiser</button>
+      <span class="confirm" hidden>Sûr ? <button class="link" data-confirm="yes">Oui</button> / <button class="link" data-confirm="no">Non</button></span>
+    </div>
+  </dialog>
 
-      <div class="layout">
-        <div class="board-wrap">
-          <svg id="c-board" class="board" viewBox="-266 -58 532 408" aria-label="Plateau de combat"></svg>
-          <div id="c-quiz" class="quiz hidden">
-            <p class="quiz-q">Quelle est ta confusion pour ce sort&nbsp;?</p>
-            <div class="quiz-opts">
-              <button data-k="0"><span class="kbd">1</span> Aucune</button>
-              <button data-k="1"><span class="kbd">2</span> 90° horaire ↻</button>
-              <button data-k="2"><span class="kbd">3</span> 180°</button>
-              <button data-k="3"><span class="kbd">4</span> 90° anti-horaire ↺</button>
-            </div>
-          </div>
-        </div>
+  <!-- ===== FICHE ===== -->
+  <dialog id="tab-fiche" class="sheet" aria-labelledby="fiche-title">
+    <div class="sheet-head">
+      <h2 id="fiche-title">Fiche</h2>
+      <button class="close icon-btn" aria-label="Fermer">✕</button>
+    </div>
+    <div class="legend">
+      <span><i class="dot self"></i>Toi</span>
+      <span><i class="dot ally"></i>Allié</span>
+      <span><i class="dot summon"></i>Invocation</span>
+      <span><i class="dot monster"></i>Monstre</span>
+      <span><i class="dot comte"></i>Comte</span>
+      <span><i class="sq trou"></i>Case noire</span>
+      <span><i class="sq pilier"></i>Obstacle</span>
+      <span><i class="sq zone"></i>Cible</span>
+      <span><i class="sq aim"></i>Visée</span>
+    </div>
+    <div class="fiche">
+      <article class="card">
+        <h3>1. Confusion selon ta vitalité</h3>
+        <p>Lue en <b>début de tour</b> (clic sur le cœur pour afficher le %). Le sort part tourné autour de toi.</p>
+        <table class="tbl">
+          <thead><tr><th>Vitalité</th><th>Confusion</th><th>Pour toucher la cible, clique…</th></tr></thead>
+          <tbody>
+            <tr><td>100 → 90 %</td><td><span class="chip k1">90° horaire ↻</span></td><td>la cible tournée de 90° <b>anti-horaire</b></td></tr>
+            <tr><td>89 → 75 %</td><td><span class="chip k3">90° anti-horaire ↺</span></td><td>la cible tournée de 90° <b>horaire</b></td></tr>
+            <tr><td>74 → 45 %</td><td><span class="chip k2">180°</span></td><td>la case <b>symétrique</b> de la cible par rapport à toi</td></tr>
+            <tr><td>44 → 30 %</td><td><span class="chip k3">90° anti-horaire ↺</span></td><td>la cible tournée de 90° <b>horaire</b></td></tr>
+            <tr><td>29 → 0 %</td><td><span class="chip k1">90° horaire ↻</span></td><td>la cible tournée de 90° <b>anti-horaire</b></td></tr>
+          </tbody>
+        </table>
+        <p class="mnemo">Moyen mnémo : <b>H · AH · 180 · AH · H</b> — symétrique autour du milieu (180° de 74 à 45 %).</p>
+        <p>Équivalents lus dans les envoûtements / le canal combat : 90° horaire = 270° anti-horaire = horaire π/2 = anti-horaire 3π/2 · 90° anti-horaire = 270° horaire = anti-horaire π/2 = horaire 3π/2 · 180° = π.</p>
+        <p>Les invocations que tu contrôles n'ont <b>pas</b> de confusion.</p>
+      </article>
 
-        <aside class="panel">
-          <div class="situation">
-            <div class="heart" id="c-heart"><span id="c-hp">--%</span></div>
-            <div class="sit-text">
-              <div class="sit-row"><span class="tag">Vitalité</span><b id="c-hp-label">--</b></div>
-              <div class="sit-row"><span class="tag">Mêlée</span><b id="c-melee">--</b></div>
-              <div class="sit-row"><span class="tag">Chrono</span><b id="c-timer">0.0 s</b></div>
-            </div>
-          </div>
-          <p class="prompt" id="c-prompt">…</p>
-          <div class="actions">
-            <button id="c-impossible" class="btn ghost">Impossible (échec critique)</button>
-            <button id="c-next" class="btn primary">Suivant <span class="kbd">Espace</span></button>
-          </div>
-          <div class="feedback" id="c-feedback" aria-live="polite"></div>
-          <div class="stats" id="c-stats"></div>
-          <button class="link" id="c-reset">Réinitialiser les stats</button>
-        </aside>
-      </div>
-    </section>
+      <article class="card">
+        <h3>2. Mêlée</h3>
+        <p>Chaque <b>ligne de dégâts</b> infligée depuis le càc d'un monstre fait tourner ta confusion de <b>90° anti-horaire</b> (pour les sorts suivants du tour).</p>
+        <ul>
+          <li>Le coup en cours respecte la confusion actuelle ; le décalage s'applique après.</li>
+          <li>Sort à 2 lignes au càc → −180°, à 3 lignes → −270° (= +90°).</li>
+          <li>Ex. : 90° horaire − 1 ligne = plus de confusion ; 90° horaire − 2 lignes = 90° anti-horaire.</li>
+          <li>Au-delà de 10 coups reçus, le monstre frappé au càc ne modifie plus la confusion.</li>
+          <li>Invocations / bombes qui frappent au càc comptent comme dégâts de mêlée.</li>
+        </ul>
+        <p class="warn">Sort redirigé vers une case inexistante ou sans ligne de vue = <b>échec critique</b> (au càc : fin de tour).</p>
+      </article>
 
-    <!-- ============ DELOCK ============ -->
-    <section id="tab-delock" class="tab">
-      <div class="toolbar">
-        <div class="seg" data-opt="dMode">
-          <span class="seg-label">Exercice</span>
-          <button data-v="predire" class="on">Prédire la frappe</button>
-          <button data-v="placer">Se placer</button>
-          <button data-v="complet">Delock complet</button>
-          <button data-v="mixte">Mixte</button>
-        </div>
-      </div>
+      <article class="card">
+        <h3>3. Delock (état invulnérable)</h3>
+        <ul>
+          <li><b>Tour impair</b> : chaque coup sur le Comte te téléporte <b>symétriquement par rapport au Comte</b>.</li>
+          <li><b>Tour pair</b> : chaque coup téléporte le <b>Comte symétriquement par rapport à toi</b>.</li>
+          <li>Si une entité est sur la case d'arrivée (tour pair) : <b>échange de place</b> → le Comte perd son invulnérabilité.</li>
+          <li>L'allié échangé gagne <b>+100 dommages</b> pendant 1 tour.</li>
+          <li>Échange avec une <b>invocation alliée</b> → tous les alliés à ≤ 3 cases de la position initiale du Comte meurent.</li>
+          <li>Case d'arrivée <b>bloquée</b> (case noire, obstacle, hors carte) → <b>combat perdu</b>, toute l'équipe meurt.</li>
+          <li>Une téléportation par ligne de dégâts : un nombre pair de lignes ramène le Comte à sa case.</li>
+        </ul>
+        <p class="mnemo">Placement : la case où te placer est le <b>milieu</b> entre le Comte et le partenaire d'échange. Il faut un écart pair sur les deux axes.</p>
+        <p>Une fois vulnérable, Stabilisation (ou un état pesanteur) l'empêche de bouger quand tu le frappes.</p>
+        <p class="muted">Sur le plateau, l'anneau doré du Comte pulse tant qu'il est invulnérable ; il se brise au delock.</p>
+      </article>
 
-      <div class="layout">
-        <div class="board-wrap">
-          <svg id="d-board" class="board" viewBox="-266 -58 532 408" aria-label="Plateau de combat"></svg>
-          <div class="legend">
-            <span><i class="dot self"></i>Toi</span>
-            <span><i class="dot ally"></i>Allié</span>
-            <span><i class="dot summon"></i>Invocation</span>
-            <span><i class="dot monster"></i>Monstre</span>
-            <span><i class="dot comte"></i>Comte</span>
-            <span><i class="sq trou"></i>Case noire</span>
-            <span><i class="sq pilier"></i>Obstacle</span>
-          </div>
-        </div>
+      <article class="card">
+        <h3>Raccourcis</h3>
+        <ul class="keys">
+          <li><kbd>Espace</kbd> / <kbd>Entrée</kbd> question suivante (ou tap sur le plateau)</li>
+          <li><kbd>1</kbd>–<kbd>4</kbd> confusion · <kbd>1</kbd>–<kbd>5</kbd> conséquence</li>
+          <li><kbd>I</kbd> Impossible · <kbd>H</kbd> Hors carte · <kbd>P</kbd> Pourquoi ?</li>
+          <li><kbd>T</kbd> onglet · <kbd>M</kbd> exercice · <kbd>O</kbd> options · <kbd>S</kbd> stats · <kbd>F</kbd> fiche</li>
+        </ul>
+      </article>
 
-        <aside class="panel">
-          <div class="situation">
-            <div class="turn" id="d-turn"><small>Tour</small><b>-</b></div>
-            <div class="sit-text">
-              <div class="sit-row"><span class="tag">Parité</span><b id="d-parity">--</b></div>
-              <div class="sit-row"><span class="tag">Comte</span><b id="d-state">Invulnérable</b></div>
-              <div class="sit-row hidden" id="d-hp-row"><span class="tag">Vitalité</span><b id="d-hp">--</b></div>
-            </div>
-          </div>
-          <p class="prompt" id="d-prompt">…</p>
-          <div class="outcomes hidden" id="d-outcomes">
-            <button data-o="comte-tp">Le Comte est téléporté (reste invulnérable)</button>
-            <button data-o="self-tp">Je suis téléporté de l'autre côté du Comte</button>
-            <button data-o="delock">Delock : échange de place, Comte vulnérable</button>
-            <button data-o="delock-summon">Delock sur invocation : alliés à ≤ 3 cases tués</button>
-            <button data-o="wipe">Case d'arrivée bloquée : toute l'équipe meurt</button>
-          </div>
-          <div class="actions">
-            <button id="d-offmap" class="btn ghost">Hors de la carte</button>
-            <button id="d-impossible" class="btn ghost hidden">Impossible (échec critique)</button>
-            <button id="d-next" class="btn primary">Suivant <span class="kbd">Espace</span></button>
-          </div>
-          <div class="feedback" id="d-feedback" aria-live="polite"></div>
-          <div class="stats" id="d-stats"></div>
-          <button class="link" id="d-reset">Réinitialiser les stats</button>
-        </aside>
-      </div>
-    </section>
-
-    <!-- ============ FICHE ============ -->
-    <section id="tab-fiche" class="tab">
-      <div class="fiche">
-        <article class="card">
-          <h2>1. Confusion selon ta vitalité</h2>
-          <p>Lue en <b>début de tour</b> (clic sur le cœur pour afficher le %). Le sort part tourné autour de toi.</p>
-          <table class="tbl">
-            <thead><tr><th>Vitalité</th><th>Confusion</th><th>Pour toucher la cible, clique…</th></tr></thead>
-            <tbody>
-              <tr><td>100 → 90 %</td><td><span class="chip k1">90° horaire ↻</span></td><td>la cible tournée de 90° <b>anti-horaire</b></td></tr>
-              <tr><td>89 → 75 %</td><td><span class="chip k3">90° anti-horaire ↺</span></td><td>la cible tournée de 90° <b>horaire</b></td></tr>
-              <tr><td>74 → 45 %</td><td><span class="chip k2">180°</span></td><td>la case <b>symétrique</b> de la cible par rapport à toi</td></tr>
-              <tr><td>44 → 30 %</td><td><span class="chip k3">90° anti-horaire ↺</span></td><td>la cible tournée de 90° <b>horaire</b></td></tr>
-              <tr><td>29 → 0 %</td><td><span class="chip k1">90° horaire ↻</span></td><td>la cible tournée de 90° <b>anti-horaire</b></td></tr>
-            </tbody>
-          </table>
-          <p class="mnemo">Moyen mnémo : <b>H · AH · 180 · AH · H</b> — symétrique autour du milieu (180° de 74 à 45 %).</p>
-          <p>Équivalents lus dans les envoûtements / le canal combat : 90° horaire = 270° anti-horaire = horaire π/2 = anti-horaire 3π/2 · 90° anti-horaire = 270° horaire = anti-horaire π/2 = horaire 3π/2 · 180° = π.</p>
-          <p>Les invocations que tu contrôles n'ont <b>pas</b> de confusion.</p>
-        </article>
-
-        <article class="card">
-          <h2>2. Mêlée</h2>
-          <p>Chaque <b>ligne de dégâts</b> infligée depuis le càc d'un monstre fait tourner ta confusion de <b>90° anti-horaire</b> (pour les sorts suivants du tour).</p>
-          <ul>
-            <li>Le coup en cours respecte la confusion actuelle ; le décalage s'applique après.</li>
-            <li>Sort à 2 lignes au càc → −180°, à 3 lignes → −270° (= +90°).</li>
-            <li>Ex. : 90° horaire − 1 ligne = plus de confusion ; 90° horaire − 2 lignes = 90° anti-horaire.</li>
-            <li>Au-delà de 10 coups reçus, le monstre frappé au càc ne modifie plus la confusion.</li>
-            <li>Invocations / bombes qui frappent au càc comptent comme dégâts de mêlée.</li>
-          </ul>
-          <p class="warn">Sort redirigé vers une case inexistante ou sans ligne de vue = <b>échec critique</b> (au càc : fin de tour).</p>
-        </article>
-
-        <article class="card">
-          <h2>3. Delock (état invulnérable)</h2>
-          <ul>
-            <li><b>Tour impair</b> : chaque coup sur le Comte te téléporte <b>symétriquement par rapport au Comte</b>.</li>
-            <li><b>Tour pair</b> : chaque coup téléporte le <b>Comte symétriquement par rapport à toi</b>.</li>
-            <li>Si une entité est sur la case d'arrivée (tour pair) : <b>échange de place</b> → le Comte perd son invulnérabilité.</li>
-            <li>L'allié échangé gagne <b>+100 dommages</b> pendant 1 tour.</li>
-            <li>Échange avec une <b>invocation alliée</b> → tous les alliés à ≤ 3 cases de la position initiale du Comte meurent.</li>
-            <li>Case d'arrivée <b>bloquée</b> (case noire, obstacle, hors carte) → <b>combat perdu</b>, toute l'équipe meurt.</li>
-            <li>Une téléportation par ligne de dégâts : un nombre pair de lignes ramène le Comte à sa case.</li>
-          </ul>
-          <p class="mnemo">Placement : la case où te placer est le <b>milieu</b> entre le Comte et le partenaire d'échange. Il faut un écart pair sur les deux axes.</p>
-          <p>Une fois vulnérable, Stabilisation (ou un état pesanteur) l'empêche de bouger quand tu le frappes.</p>
-        </article>
-
-        <article class="card">
-          <h2>Sources &amp; crédits</h2>
-          <ul>
-            <li><a href="https://dofus-portals.fr/donjons/donjon-du-comte-harebourg/" target="_blank" rel="noopener">dofus-portals.fr — Donjon du Comte Harebourg</a></li>
-            <li><a href="https://guidedofus.com/v2/donjon-du-comte-harebourg" target="_blank" rel="noopener">guidedofus.com — Donjon du comte Harebourg</a></li>
-            <li><a href="https://www.dofuspourlesnoobs.com/donjon-du-comte-harebourg.html" target="_blank" rel="noopener">dofuspourlesnoobs.com — Donjon du comte Harebourg</a></li>
-          </ul>
-          <p class="muted">Visuels des monstres, sorts et têtes : © Ankama Games, récupérés via DofusDB. Projet de fan non officiel.</p>
-        </article>
-      </div>
-    </section>
-  </main>
+      <article class="card">
+        <h3>Sources &amp; crédits</h3>
+        <ul>
+          <li><a href="https://dofus-portals.fr/donjons/donjon-du-comte-harebourg/" target="_blank" rel="noopener">dofus-portals.fr — Donjon du Comte Harebourg</a></li>
+          <li><a href="https://guidedofus.com/v2/donjon-du-comte-harebourg" target="_blank" rel="noopener">guidedofus.com — Donjon du comte Harebourg</a></li>
+          <li><a href="https://www.dofuspourlesnoobs.com/donjon-du-comte-harebourg.html" target="_blank" rel="noopener">dofuspourlesnoobs.com — Donjon du comte Harebourg</a></li>
+        </ul>
+        <p class="muted">Visuels des monstres, sorts et têtes : © Ankama Games, récupérés via DofusDB. Projet de fan non officiel.</p>
+      </article>
+    </div>
+  </dialog>
 
   <script src="js/engine.js"></script>
   <script src="js/app.js"></script>

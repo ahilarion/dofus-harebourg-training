@@ -9,6 +9,19 @@ npm test            # tests du moteur de règles (node >= 18)
 
 Vous pouvez aussi ouvrir `index.html` directement dans un navigateur.
 
+## Interface
+
+Le plateau occupe tout l'écran disponible ; le reste de l'interface est réduit à l'essentiel.
+
+- **Ordinateur (paysage)** : plateau à gauche, rail d'action de 300 px à droite (onglets, exercice, cœur % PV / mêlée ou tour / parité, consigne courte, réponses, Suivant).
+- **Téléphone et écrans 4:3** : barre du haut (onglets, exercice en liste, stats, options, fiche), plateau, puis dock en bas (HUD, consigne, réponses).
+- **Après une réponse**, le plateau montre le résultat en premier : liseré vert ou rouge, badges ✔ / ✘ / ÉC sur les cases, flèches, arc de rotation de la confusion autour de « Toi ». Le texte se limite au verdict et à une ligne ; le détail est replié derrière **Pourquoi ?**.
+- **⚙ Options** : cible, mêlée, échecs critiques, enchaînement automatique si juste, chrono visible, thème (auto / clair / sombre).
+- **Stats** : la mini-ligne « 84 % · série 7 » ouvre le détail (réussite, série, record, temps moyen, point faible, réinitialisation).
+- **?** ouvre la fiche des règles (avec la légende des couleurs).
+
+Raccourcis : `Espace` / `Entrée` suivant (ou tap sur le plateau), `1`–`4` confusion, `1`–`5` conséquence, `I` Impossible, `H` Hors carte, `P` Pourquoi ?, `T` onglet, `M` exercice, `O` options, `S` stats, `F` ou `?` fiche.
+
 ## Entraînement 1 : Confusions
 
 Chaque question donne un **% de vitalité**, l'état de **mêlée** (lignes de dégâts déjà infligées au càc ce tour), **ta position** et celle de l'**ennemi**.
@@ -30,7 +43,7 @@ Options : cible en ligne, en diagonale ou libre ; mêlée activée ou non ; cas 
 | **Se placer** | Tour pair : marquer la case où te placer pour que ta frappe échange le Comte avec un allié ou un monstre. |
 | **Delock complet** | Se placer, puis viser le Comte malgré ta confusion. |
 
-Les stats (réussite, série, temps moyen, point faible par tranche de PV) sont gardées dans le `localStorage` du navigateur. `Espace` passe à la question suivante.
+Les stats (réussite, série, temps moyen, point faible par tranche de PV) et les options sont gardées dans le `localStorage` du navigateur.
 
 ## Règles modélisées (`js/engine.js`)
 

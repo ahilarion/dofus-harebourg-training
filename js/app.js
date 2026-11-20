@@ -21,14 +21,24 @@
   const portraitMQ = window.matchMedia('(max-aspect-ratio: 4/5)');
   const SHAPES = { land: { D: 7, S: 20 }, port: { D: 4, S: 26 } };
   let shape = '';
+  const REAL = window.HB_COMTE_MAP || null;
+  const REAL_OBST = REAL ? new Map(REAL.obst.map(([x, y]) => [x + ',' + y, 'pilier'])) : new Map();
+  const isReal = () => !!REAL && opts.map !== 'aleatoire';
   function applyShape() {
-    const next = portraitMQ.matches ? 'port' : 'land';
+    document.body.classList.toggle('real-portrait', isReal() && portraitMQ.matches);
+    const next = isReal() ? 'real' : portraitMQ.matches ? 'port' : 'land';
     if (next === shape) return false;
     shape = next;
-    Object.assign(HB.MAP, SHAPES[next]);
+    let vb;
+    if (next === 'real') {
+      Object.assign(HB.MAP, { D: 14, S: 39, cells: new Set(REAL.walk.concat(REAL.obst).map(([x, y]) => x + ',' + y)) });
+      vb = REAL.viewBox.join(' ');
+    } else {
+      Object.assign(HB.MAP, SHAPES[next], { cells: null });
+      const w = HB.MAP.D * HW + HW + 2;
+      vb = `${-w} -46 ${2 * w} ${HB.MAP.S * HH + HH + 2 + 46}`;
+    }
     CELLS = HB.allCells();
-    const w = HB.MAP.D * HW + HW + 2;
-    const vb = `${-w} -46 ${2 * w} ${HB.MAP.S * HH + HH + 2 + 46}`;
     document.querySelectorAll('.board').forEach((b) => b.setAttribute('viewBox', vb));
     return true;
   }
@@ -228,14 +238,19 @@
         gHover.innerHTML = '';
         hoverKey = null;
         entEls.clear();
+        const real = isReal();
+        if (real) {
+          const im = REAL.img;
+          el('image', { href: im.href, x: im.x, y: im.y, width: im.w, height: im.h, class: 'map-bg', preserveAspectRatio: 'none' }, gCells);
+        }
         for (const c of CELLS) {
           const b = board.blocked.get(key(c));
-          const cls = 'cell' + (c.x % 2 === 0 ? ' alt' : '') + (b === 'trou' ? ' trou' : '');
+          const cls = 'cell' + (real ? ' real' + (b ? ' obst' : '') : (c.x % 2 === 0 ? ' alt' : '') + (b === 'trou' ? ' trou' : ''));
           el('polygon', { class: cls, points: diamond(c), 'data-x': c.x, 'data-y': c.y }, gCells);
         }
         const drawables = [];
         for (const [k, v] of board.blocked) {
-          if (v !== 'pilier') continue;
+          if (v !== 'pilier' || real) continue;
           const [x, y] = k.split(',').map(Number);
           drawables.push({ depth: x + y, node: pillarNode({ x, y }) });
         }
@@ -338,6 +353,7 @@
 
   // ---------- génération commune ----------
   function genBlocked(holes, pillars) {
+    if (isReal()) return new Map(REAL_OBST);
     const m = new Map();
     while (m.size < holes + pillars) {
       const c = pick(CELLS);
@@ -524,7 +540,7 @@
   }
 
   // ---------- options ----------
-  const DEFAULTS = { cMode: 'taper', cAlign: 'libre', cMelee: 'on', cImpossible: 'on', dMode: 'predire', autoNext: 'on', showTimer: 'off', theme: 'auto' };
+  const DEFAULTS = { map: 'comte', cMode: 'taper', cAlign: 'libre', cMelee: 'on', cImpossible: 'on', dMode: 'predire', autoNext: 'on', showTimer: 'off', theme: 'auto' };
   const opts = Object.assign({}, DEFAULTS, store.get('hbt-opts', {}));
   function applyTheme() {
     if (opts.theme === 'light' || opts.theme === 'dark') document.documentElement.setAttribute('data-theme', opts.theme);
@@ -534,7 +550,7 @@
     $('#c-timer').hidden = opts.showTimer !== 'on';
   }
   function markDirty() {
-    const dirty = ['cAlign', 'cMelee', 'cImpossible', 'autoNext', 'showTimer', 'theme'].some((k) => opts[k] !== DEFAULTS[k]);
+    const dirty = ['map', 'cAlign', 'cMelee', 'cImpossible', 'autoNext', 'showTimer', 'theme'].some((k) => opts[k] !== DEFAULTS[k]);
     $('#btn-opts').classList.toggle('dirty', dirty);
   }
   $$('.seg[data-opt]').forEach((seg) => {
@@ -553,6 +569,11 @@
         if (name === 'theme') applyTheme();
         else if (name === 'showTimer') applyTimer();
         else if (name === 'autoNext') Auto.cancel();
+        else if (name === 'map') {
+          applyShape();
+          Conf.next();
+          Delock.next();
+        }
         else if (name === 'dMode') Delock.next();
         else Conf.next();
         if (name === 'cMode' || name === 'dMode') syncModeSelect();
@@ -960,7 +981,7 @@
         const dest = even ? HB.symmetric(A, C) : HB.symmetric(C, A);
         if (desired === 'wipe') {
           if (!HB.isBlocked(b, dest)) {
-            if (!HB.onMap(dest) || HB.entityAt(b, dest) || chance(0.35)) continue;
+            if (isReal() || !HB.onMap(dest) || HB.entityAt(b, dest) || chance(0.35)) continue;
             b.blocked.set(key(dest), pick(['trou', 'pilier']));
           }
         } else {

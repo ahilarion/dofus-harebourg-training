@@ -329,6 +329,10 @@ body[data-tab="delock"] [data-for="confusion"] { display: none !important; }
 .cell { fill: var(--cell-a); stroke: var(--cell-line); stroke-width: .6; cursor: pointer; }
 .cell.alt { fill: var(--cell-b); }
 .cell.trou { fill: var(--hole); }
+.map-bg { pointer-events: none; }
+.cells:has(.map-bg) { filter: none; }
+.cell.real { fill: rgba(255, 255, 255, .05); stroke: rgba(40, 25, 10, .38); stroke-width: .7; }
+.cell.real.obst { fill: rgba(20, 10, 5, .18); stroke: none; }
 .hover-ring { fill: none; stroke: var(--accent); stroke-width: 2; pointer-events: none; }
 .hover-ring.press { fill: color-mix(in srgb, var(--accent) 30%, transparent); }
 .locked .cell { cursor: default; }
@@ -556,4 +560,12 @@ dialog::backdrop { background: rgba(0, 0, 0, .25); }
   *, *::before, *::after { animation-duration: 0s !important; animation-iteration-count: 1 !important; transition-duration: 0s !important; }
   .autobar i { animation-duration: var(--d, 1s) !important; }
   .draw { stroke-dashoffset: 0; }
+}
+
+/* Salle réelle sur téléphone en portrait : inviter à tourner l'écran */
+body.real-portrait .stage::before {
+  content: "↻ Tourne ton téléphone en paysage pour agrandir la salle";
+  position: absolute; top: 18%; left: 50%; transform: translateX(-50%);
+  width: max-content; max-width: calc(100% - 32px); text-align: center;
+  font-size: 14px; color: var(--muted); pointer-events: none;
 }

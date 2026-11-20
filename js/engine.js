@@ -92,15 +92,20 @@
 
   // ---- Carte : rectangle "écran" façon Dofus ----
   // Cellule valide si |x - y| <= D et 0 <= x + y <= S.
-  const MAP = { D: 7, S: 20 };
+  const MAP = { D: 7, S: 20, cells: null }; // cells : Set de clés 'x,y' pour une carte réelle
 
   function onMap(c) {
+    if (MAP.cells) return MAP.cells.has(c.x + ',' + c.y);
     const d = c.x - c.y;
     const s = c.x + c.y;
     return Math.abs(d) <= MAP.D && s >= 0 && s <= MAP.S;
   }
 
   function allCells() {
+    if (MAP.cells) return Array.from(MAP.cells, (k) => {
+      const [x, y] = k.split(',').map(Number);
+      return { x, y };
+    });
     const out = [];
     for (let s = 0; s <= MAP.S; s++) {
       for (let d = -MAP.D; d <= MAP.D; d++) {

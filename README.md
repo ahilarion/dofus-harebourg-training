@@ -65,7 +65,9 @@ Les stats (réussite, série, temps moyen, point faible par tranche de PV) et le
 - **Échange avec une invocation alliée** : les alliés à 3 cases ou moins de la position initiale du Comte meurent.
 - **Case d'arrivée bloquée** (case noire, obstacle, hors carte) : toute l'équipe meurt.
 
-**Simplifications** : la ligne de vue, la portée des sorts et les PM ne sont pas simulés. La carte est générique, ce n'est pas la vraie salle du Comte.
+**Simplifications** : la ligne de vue, la portée des sorts et les PM ne sont pas simulés.
+
+**Carte** : par défaut, la vraie salle du Comte (« Donjon du Comte - Grande aiguille », map 112203523), avec le rendu DofusDB en fond (`assets/salle-comte.jpg`). Les cases jouables et les obstacles (horloge, machines, piliers, rochers) ont été relevés à la main sur ce rendu (`js/map-comte.js`) : c'est une approximation, pas les données officielles des cases. L'option ⚙ → Carte → Aléatoire remet une carte générée.
 
 ## Sources
 
